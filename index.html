@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Styles -->
     <link rel="stylesheet" href="css/style.css">
@@ -222,16 +221,32 @@
         </main>
     </div>
 
-    <!-- Scripts - Only load app.js as module -->
-    <script type="module" src="js/app.js"></script>
-    
-    <!-- Configuration - Set environment variables before app loads -->
+    <!-- Supabase JS Library - MUST load before config -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configuration - Environment variables loaded from .env or set manually -->
     <script>
-        // Configure KarAI environment variables here
+        // KarAI Configuration
+        // For local development: create a .env file (not committed to git)
+        // For Vercel: set environment variables in Vercel dashboard
         window.KARAI_CONFIG = {
-            SUPABASE_URL: '',  // Add your Supabase URL
-            SUPABASE_ANON_KEY: ''  // Add your Supabase Anon Key
+            SUPABASE_URL: '',  // Set via environment variable or manually here
+            SUPABASE_ANON_KEY: ''  // Set via environment variable or manually here
+            // 
+            // LOCAL DEVELOPMENT:
+            // Create a file named '.env' in the project root with:
+            //   SUPABASE_URL=your_url_here
+            //   SUPABASE_ANON_KEY=your_key_here
+            // Then use a local server that supports .env files
+            //
+            // VERCEL DEPLOYMENT:
+            // Go to Vercel Dashboard → Project Settings → Environment Variables
+            // Add: SUPABASE_URL and SUPABASE_ANON_KEY
+            // They will be automatically available at runtime
         };
     </script>
+
+    <!-- Main App Module -->
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
