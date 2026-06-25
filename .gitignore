@@ -1,1 +1,1 @@
-(js/config.js was added, but it's a source file, not a build artifact or dependency - no ignores needed)
+(js/auth.js is just a source file modification, no build artifacts, dependencies, or temp files in the changes)
