@@ -60,13 +60,6 @@ export function initSupabase() {
 }
 
 /**
- * Check if Supabase is configured
- */
-export function isSupabaseConfigured() {
-    return supabase !== null;
-}
-
-/**
  * Initialize authentication system
  */
 export async function initAuth() {
@@ -623,7 +616,6 @@ export function onAuthStateChange(callback) {
 
 export default {
     initSupabase,
-    isSupabaseConfigured,
     getCurrentUser,
     isAuthenticated,
     isGuestUser,
