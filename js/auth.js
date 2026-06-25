@@ -1,7 +1,7 @@
 /**
  * KARAI v2 - Authentication Module
  * Sarkas tapi Berguna
- * 
+ *
  * Handles:
  * - Supabase Auth initialization
  * - Google OAuth login
@@ -9,9 +9,9 @@
  * - User session management
  */
 
-import { 
-    saveToStorage, 
-    getFromStorage, 
+import {
+    saveToStorage,
+    getFromStorage,
     removeFromStorage,
     generateGuestId,
     showToast,
@@ -48,8 +48,14 @@ export function initSupabase() {
         console.warn('Supabase credentials not configured. Using mock mode.');
         return null;
     }
-    
+
     try {
+        // Check if Supabase library is loaded from CDN
+        if (!window.supabase || !window.supabase.createClient) {
+            console.error('Supabase library not loaded from CDN');
+            return null;
+        }
+        
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         log('Supabase initialized');
         return supabase;
@@ -64,20 +70,20 @@ export function initSupabase() {
  */
 export async function initAuth() {
     log('Initializing auth...');
-    
+
     // Initialize Supabase if not already done
     if (!supabase) {
         initSupabase();
     }
-    
+
     // Load existing session
     await loadUserFromStorage();
-    
+
     // Setup auth state listener
     onAuthStateChange((event, session) => {
         handleAuthStateChange(event, session);
     });
-    
+
     log('Auth initialized');
 }
 
@@ -92,21 +98,21 @@ function handleAuthStateChange(event, session) {
             saveToStorage('karai_user', currentUser);
             log('User signed in:', currentUser.email);
             break;
-            
+
         case 'SIGNED_OUT':
             currentUser = null;
             isGuest = false;
             removeFromStorage('karai_user');
             log('User signed out');
             break;
-            
+
         case 'TOKEN_REFRESHED':
             if (session) {
                 currentUser = session.user;
                 saveToStorage('karai_user', currentUser);
             }
             break;
-            
+
         default:
             log('Auth event:', event);
     }
@@ -196,7 +202,7 @@ export async function loginWithGoogle() {
             setCurrentUser(mockUser, false);
             return { user: mockUser, error: null };
         }
-        
+
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -207,9 +213,9 @@ export async function loginWithGoogle() {
                 },
             },
         });
-        
+
         if (error) throw error;
-        
+
         log('Google OAuth initiated');
         return { data, error: null };
     } catch (error) {
@@ -225,28 +231,28 @@ export async function loginWithGoogle() {
 export async function handleOAuthCallback() {
     try {
         if (!supabase) return null;
-        
+
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
-        
+
         if (accessToken) {
             const { data: { user }, error } = await supabase.auth.getUser();
-            
+
             if (error) throw error;
-            
+
             if (user) {
                 // Get or create user profile
                 const userProfile = await getOrCreateUserProfile(user);
                 setCurrentUser(userProfile, false);
-                
+
                 // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
-                
+
                 log('OAuth callback successful');
                 return userProfile;
             }
         }
-        
+
         return null;
     } catch (error) {
         console.error('OAuth callback failed:', error);
@@ -261,18 +267,18 @@ export async function handleOAuthCallback() {
 async function getOrCreateUserProfile(authUser) {
     try {
         if (!supabase) return null;
-        
+
         // Try to get existing user
         const { data: existingUser, error: fetchError } = await supabase
             .from('users')
             .select('*')
             .eq('id', authUser.id)
             .single();
-        
+
         if (existingUser) {
             return existingUser;
         }
-        
+
         // Create new user
         const newUser = {
             id: authUser.id,
@@ -281,15 +287,15 @@ async function getOrCreateUserProfile(authUser) {
             avatar: authUser.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.id}`,
             tier: 'free'
         };
-        
+
         const { data: createdUser, error: createError } = await supabase
             .from('users')
             .insert([newUser])
             .select()
             .single();
-        
+
         if (createError) throw createError;
-        
+
         return createdUser;
     } catch (error) {
         console.error('Failed to get/create user profile:', error);
@@ -315,15 +321,15 @@ export async function loginAsGuest() {
     try {
         // Generate or retrieve guest session ID
         let sessionId = getFromStorage('karai_guest_id');
-        
+
         if (!sessionId) {
             sessionId = generateGuestId();
             saveToStorage('karai_guest_id', sessionId);
         }
-        
+
         guestSessionId = sessionId;
         isGuest = true;
-        
+
         const guestUser = {
             id: sessionId,
             email: null,
@@ -332,17 +338,17 @@ export async function loginAsGuest() {
             tier: 'guest',
             isGuest: true
         };
-        
+
         setCurrentUser(guestUser, true);
-        
+
         // Track guest session in database if Supabase is available
         if (supabase) {
             await trackGuestSession(sessionId);
         }
-        
+
         log('Guest login successful');
         showToast('Mode tamu aktif (50 pesan/hari)', 'info');
-        
+
         return { user: guestUser, error: null };
     } catch (error) {
         console.error('Guest login failed:', error);
@@ -357,9 +363,9 @@ export async function loginAsGuest() {
 async function trackGuestSession(sessionId) {
     try {
         if (!supabase) return;
-        
+
         const today = new Date().toISOString().split('T')[0];
-        
+
         const { error } = await supabase
             .from('guest_sessions')
             .upsert({
@@ -372,9 +378,9 @@ async function trackGuestSession(sessionId) {
             }, {
                 onConflict: 'session_id'
             });
-        
+
         if (error) throw error;
-        
+
         log('Guest session tracked');
     } catch (error) {
         console.error('Failed to track guest session:', error);
@@ -388,35 +394,35 @@ export async function checkGuestLimit() {
     if (!isGuest) {
         return { allowed: true, remaining: Infinity, limit: Infinity };
     }
-    
+
     try {
         if (!supabase) {
             // Mock check
             const stored = getFromStorage('karai_guest_usage');
             const today = new Date().toISOString().split('T')[0];
-            
+
             if (!stored || stored.date !== today) {
                 return { allowed: true, remaining: 50, limit: 50 };
             }
-            
+
             const remaining = 50 - stored.count;
-            return { 
-                allowed: remaining > 0, 
-                remaining: Math.max(0, remaining), 
-                limit: 50 
+            return {
+                allowed: remaining > 0,
+                remaining: Math.max(0, remaining),
+                limit: 50
             };
         }
-        
+
         const { data, error } = await supabase.rpc('check_guest_limit', {
             p_session_id: guestSessionId
         });
-        
+
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
             return data[0];
         }
-        
+
         return { allowed: true, remaining: 50, limit: 50 };
     } catch (error) {
         console.error('Failed to check guest limit:', error);
@@ -429,10 +435,10 @@ export async function checkGuestLimit() {
  */
 export async function incrementGuestMessageCount() {
     if (!isGuest) return;
-    
+
     try {
         const today = new Date().toISOString().split('T')[0];
-        
+
         if (!supabase) {
             // Local storage tracking
             const stored = getFromStorage('karai_guest_usage');
@@ -440,13 +446,13 @@ export async function incrementGuestMessageCount() {
             saveToStorage('karai_guest_usage', { date: today, count });
             return count;
         }
-        
+
         const { error } = await supabase.rpc('increment_guest_count', {
             p_session_id: guestSessionId
         });
-        
+
         if (error) throw error;
-        
+
         log('Guest message count incremented');
     } catch (error) {
         console.error('Failed to increment guest count:', error);
@@ -463,11 +469,11 @@ export async function incrementGuestMessageCount() {
 function setCurrentUser(user, guest) {
     currentUser = user;
     isGuest = guest;
-    
+
     if (user && !guest) {
         saveToStorage('karai_user', user);
     }
-    
+
     // Update UI
     updateUserUI(user);
 }
@@ -482,7 +488,7 @@ export async function loadUserFromStorage() {
             const user = await handleOAuthCallback();
             if (user) return user;
         }
-        
+
         // Try to load from storage
         const storedUser = getFromStorage('karai_user');
         if (storedUser) {
@@ -492,13 +498,13 @@ export async function loadUserFromStorage() {
             log('User loaded from storage');
             return storedUser;
         }
-        
+
         // Check for guest session
         const guestId = getFromStorage('karai_guest_id');
         if (guestId) {
             return await loginAsGuest();
         }
-        
+
         return null;
     } catch (error) {
         console.error('Failed to load user from storage:', error);
@@ -511,20 +517,20 @@ export async function loadUserFromStorage() {
  */
 function updateUserUI(user) {
     if (!user) return;
-    
+
     const avatarEl = document.getElementById('user-avatar');
     const nameEl = document.getElementById('user-name');
     const tierEl = document.getElementById('user-tier');
-    
+
     if (avatarEl) {
         avatarEl.src = user.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default';
         avatarEl.alt = user.name || 'User';
     }
-    
+
     if (nameEl) {
         nameEl.textContent = user.name || 'User';
     }
-    
+
     if (tierEl) {
         tierEl.textContent = user.tier === 'guest' ? 'Tamu' : (user.tier || 'Free');
     }
@@ -542,29 +548,29 @@ export async function logout() {
         if (supabase && !isGuest) {
             await supabase.auth.signOut();
         }
-        
+
         // Clear local state
         currentUser = null;
         isGuest = false;
         guestSessionId = null;
-        
+
         // Clear storage
         removeFromStorage('karai_user');
         removeFromStorage('karai_guest_id');
         removeFromStorage('karai_guest_usage');
-        
+
         // Reset UI
         const avatarEl = document.getElementById('user-avatar');
         const nameEl = document.getElementById('user-name');
         const tierEl = document.getElementById('user-tier');
-        
+
         if (avatarEl) avatarEl.src = '';
         if (nameEl) nameEl.textContent = 'User';
         if (tierEl) tierEl.textContent = 'Free';
-        
+
         log('User logged out');
         showToast('Berhasil logout', 'success');
-        
+
         return { success: true };
     } catch (error) {
         console.error('Logout failed:', error);
@@ -582,10 +588,10 @@ export async function logout() {
  */
 export function onAuthStateChange(callback) {
     if (!supabase) return;
-    
+
     supabase.auth.onAuthStateChange((event, session) => {
         log('Auth state changed:', event);
-        
+
         switch (event) {
             case 'SIGNED_IN':
                 getOrCreateUserProfile(session.user).then(user => {
@@ -593,17 +599,17 @@ export function onAuthStateChange(callback) {
                     callback(user);
                 });
                 break;
-                
+
             case 'SIGNED_OUT':
                 currentUser = null;
                 isGuest = false;
                 callback(null);
                 break;
-                
+
             case 'TOKEN_REFRESHED':
                 // Session refreshed, no action needed
                 break;
-                
+
             default:
                 log('Unknown auth event:', event);
         }
