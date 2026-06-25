@@ -4,7 +4,7 @@
  */
 
 import { initAuth, getCurrentUser, isGuestUser as isGuest, logout, getGuestSessionId } from './auth.js';
-import { initChat, startNewChat, loadConversation } from './chat.js';
+import { initChat, startNewChat, loadConversation, getCurrentConversationId } from './chat.js';
 import { getConversations, deleteConversation } from './history.js';
 
 // State
@@ -26,6 +26,7 @@ export async function initApp() {
     if (!user && !guest) {
         // Show login screen
         showLoginScreen();
+        setupLoginListeners();
         return;
     }
 
@@ -45,14 +46,50 @@ export async function initApp() {
 }
 
 /**
+ * Setup login page event listeners
+ */
+function setupLoginListeners() {
+    // Google login button
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', handleGoogleLogin);
+    }
+
+    // Guest login button
+    const guestLoginBtn = document.getElementById('guest-login-btn');
+    if (guestLoginBtn) {
+        guestLoginBtn.addEventListener('click', handleGuestLogin);
+    }
+}
+
+/**
+ * Handle Google login
+ */
+async function handleGoogleLogin() {
+    const { loginWithGoogle } = await import('./auth.js');
+    await loginWithGoogle();
+}
+
+/**
+ * Handle guest login
+ */
+async function handleGuestLogin() {
+    const { loginAsGuest } = await import('./auth.js');
+    const result = await loginAsGuest();
+    if (result && !result.error) {
+        window.location.reload();
+    }
+}
+
+/**
  * Show login screen
  */
 function showLoginScreen() {
     const appContainer = document.getElementById('app-container');
-    const loginContainer = document.getElementById('login-container');
+    const loginPage = document.getElementById('login-page');
 
-    if (appContainer) appContainer.style.display = 'none';
-    if (loginContainer) loginContainer.style.display = 'flex';
+    if (appContainer) appContainer.classList.add('hidden');
+    if (loginPage) loginPage.classList.remove('hidden');
 }
 
 /**
@@ -60,10 +97,10 @@ function showLoginScreen() {
  */
 function showMainApp() {
     const appContainer = document.getElementById('app-container');
-    const loginContainer = document.getElementById('login-container');
+    const loginPage = document.getElementById('login-page');
 
-    if (appContainer) appContainer.style.display = 'flex';
-    if (loginContainer) loginContainer.style.display = 'none';
+    if (appContainer) appContainer.classList.remove('hidden');
+    if (loginPage) loginPage.classList.add('hidden');
 }
 
 /**
@@ -85,12 +122,6 @@ function setupEventListeners() {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
-    }
-
-    // User profile button
-    const userBtn = document.getElementById('user-btn');
-    if (userBtn) {
-        userBtn.addEventListener('click', toggleUserMenu);
     }
 }
 
@@ -158,16 +189,6 @@ function showComingSoon(mode) {
 async function handleLogout() {
     await logout();
     window.location.reload();
-}
-
-/**
- * Toggle user menu dropdown
- */
-function toggleUserMenu() {
-    const menu = document.getElementById('user-menu');
-    if (menu) {
-        menu.classList.toggle('show');
-    }
 }
 
 /**
@@ -303,32 +324,19 @@ function escapeHtml(text) {
  */
 export function updateUserUI() {
     const user = getCurrentUser();
-    const userBtn = document.getElementById('user-btn');
     const userName = document.getElementById('user-name');
-    const userEmail = document.getElementById('user-email');
+    const userTier = document.getElementById('user-tier');
     const userAvatar = document.getElementById('user-avatar');
-    const guestBadge = document.getElementById('guest-badge');
-
-    if (!userBtn) return;
 
     if (user) {
         // Logged in user
         if (userName) userName.textContent = user.name || 'User';
-        if (userEmail) userEmail.textContent = user.email;
-        if (userAvatar) {
-            userAvatar.textContent = getInitials(user.name || 'User');
-            userAvatar.style.backgroundColor = '#6366f1';
+        if (userTier) userTier.textContent = user.tier === 'guest' ? 'Tamu' : (user.tier || 'Free');
+        if (userAvatar && user.avatar) {
+            userAvatar.src = user.avatar;
+        } else if (userAvatar) {
+            userAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name || 'user'}`;
         }
-        if (guestBadge) guestBadge.style.display = 'none';
-    } else if (isGuest()) {
-        // Guest user
-        if (userName) userName.textContent = 'Guest User';
-        if (userEmail) userEmail.textContent = 'Temporary Session';
-        if (userAvatar) {
-            userAvatar.textContent = 'GU';
-            userAvatar.style.backgroundColor = '#f59e0b';
-        }
-        if (guestBadge) guestBadge.style.display = 'inline-block';
     }
 }
 
@@ -346,6 +354,9 @@ export function getCurrentMode() {
     return currentMode;
 }
 
-// Make initApp available globally
-window.initApp = initApp;
-window.switchMode = switchMode;
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
