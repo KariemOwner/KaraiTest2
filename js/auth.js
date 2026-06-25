@@ -17,14 +17,15 @@ import {
     showToast,
     log
 } from './utils.js';
+import { isSupabaseConfigured, getSupabaseUrl, getSupabaseAnonKey } from './config.js';
 
 // ============================================
 // CONFIGURATION
 // ============================================
 
-// These will be replaced with environment variables in production
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Get config from config module
+const SUPABASE_URL = getSupabaseUrl();
+const SUPABASE_ANON_KEY = getSupabaseAnonKey();
 
 // ============================================
 // STATE

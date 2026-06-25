@@ -20,15 +20,16 @@ let loadingIndicator = null;
  * Initialize chat module
  */
 export function initChat() {
-    chatContainer = document.getElementById('chat-container');
+    const messagesContainer = document.getElementById('messages-container');
     inputElement = document.getElementById('chat-input');
-    sendButton = document.getElementById('send-button');
-    loadingIndicator = document.getElementById('loading-indicator');
+    sendButton = document.getElementById('send-btn');
 
-    if (!chatContainer || !inputElement || !sendButton) {
+    if (!messagesContainer || !inputElement || !sendButton) {
         console.error('Chat DOM elements not found');
         return;
     }
+
+    chatContainer = messagesContainer;
 
     // Event listeners
     sendButton.addEventListener('click', handleSendMessage);
@@ -373,16 +374,13 @@ function showToast(message) {
 function setLoading(loading) {
     isLoading = loading;
     
-    if (loadingIndicator) {
-        loadingIndicator.style.display = loading ? 'flex' : 'none';
-    }
-
     if (inputElement) {
         inputElement.disabled = loading;
     }
 
     if (sendButton) {
         sendButton.disabled = loading;
+        sendButton.classList.toggle('loading', loading);
     }
 }
 
