@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KarAI v2 - Sarkas tapi Berguna</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-box">
+            <div class="logo-section">
+                <div class="logo">🤖</div>
+                <h1>KarAI v2</h1>
+                <p class="tagline">Sarkas tapi berguna</p>
+            </div>
+            
+            <div class="login-options">
+                <button id="google-login-btn" class="btn btn-google">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18.1713 8.36791H17.5001V8.33325H10.0001V11.6666H14.7096C14.0225 13.607 12.1763 14.9999 10.0001 14.9999C7.23882 14.9999 5.00007 12.7612 5.00007 9.99992C5.00007 7.23867 7.23882 4.99992 10.0001 4.99992C11.2746 4.99992 12.4342 5.48075 13.3171 6.26617L15.6742 3.909C14.1859 2.52217 12.1951 1.66659 10.0001 1.66659C5.39799 1.66659 1.66675 5.39784 1.66675 9.99992C1.66675 14.602 5.39799 18.3333 10.0001 18.3333C14.6021 18.3333 18.3334 14.602 18.3334 9.99992C18.3334 9.44117 18.2763 8.89575 18.1713 8.36791Z" fill="#FFC107"/>
+                        <path d="M2.62756 6.12117L5.36548 8.12909C6.10631 6.29534 7.90048 4.99992 10.0001 4.99992C11.2747 4.99992 12.4343 5.48075 13.3172 6.26617L15.6743 3.909C14.186 2.52217 12.1952 1.66659 10.0001 1.66659C6.15923 1.66659 2.93548 3.80534 1.66675 6.12117H2.62756Z" fill="#FF3D00"/>
+                        <path d="M10.0001 18.3333C12.1526 18.3333 14.108 17.5095 15.5876 16.1707L13.0076 13.9874C12.1439 14.6452 11.0859 15.0007 10.0001 14.9999C7.83215 14.9999 5.99182 13.6178 5.29848 11.6891L2.58215 13.7832C3.83673 16.2166 7.02265 18.3333 10.0001 18.3333Z" fill="#4CAF50"/>
+                        <path d="M18.1713 8.36797H17.5V8.33331H10V11.6666H14.7096C14.3809 12.5902 13.7889 13.3972 13.0067 13.988L13.0076 13.9874L15.5876 16.1707C15.4046 16.3366 18.3333 14.1666 18.3333 9.99998C18.3333 9.44123 18.2762 8.89581 18.1713 8.36797Z" fill="#1976D2"/>
+                    </svg>
+                    Login dengan Google
+                </button>
+                
+                <div class="divider">
+                    <span>atau</span>
+                </div>
+                
+                <button id="guest-login-btn" class="btn btn-guest">
+                    Coba sebagai Tamu
+                </button>
+                
+                <p class="guest-limit-info">
+                    ⚠️ Mode tamu terbatas <span id="guest-limit-display">50</span> pesan/hari
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" class="app-container hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-small">🤖</div>
+                <h2>KarAI v2</h2>
+            </div>
+            
+            <button id="new-chat-btn" class="btn-new-chat">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 4.16675V15.8334M4.16667 10H15.8333" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Chat Baru
+            </button>
+            
+            <div class="mode-switcher">
+                <button class="mode-btn active" data-mode="chat">
+                    💬 Chat
+                </button>
+                <button class="mode-btn" data-mode="voice">
+                    🎤 Voice
+                </button>
+                <button class="mode-btn" data-mode="coding">
+                    💻 Coding
+                </button>
+            </div>
+            
+            <div class="history-section">
+                <h3>Riwayat Chat</h3>
+                <div id="chat-history-list" class="chat-history-list">
+                    <!-- History items will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="user-section">
+                <div class="user-info">
+                    <img id="user-avatar" src="" alt="User" class="user-avatar">
+                    <div class="user-details">
+                        <span id="user-name" class="user-name">User</span>
+                        <span id="user-tier" class="user-tier">Free</span>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn-logout">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 1.66675V5.00008M10 15.0001V18.3334M15.8333 10H18.3333M1.66667 10H4.16667M15.8333 10C15.8333 12.7615 13.5946 15.0001 10.8333 15.0001C8.07215 15.0001 5.83334 12.7615 5.83334 10C5.83334 7.23867 8.07215 5.00008 10.8333 5.00008C13.5946 5.00008 15.8333 7.23867 15.8333 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Mode -->
+            <div id="chat-mode" class="mode-content active">
+                <div class="chat-container">
+                    <div id="messages-container" class="messages-container">
+                        <!-- Messages will be rendered here -->
+                        <div class="welcome-message">
+                            <h2>👋 Halo, gue KarAI!</h2>
+                            <p>Sarkas tapi berguna. Ada yang bisa dibantu?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <div class="image-preview-container hidden" id="image-preview-container">
+                            <div class="image-preview">
+                                <img id="image-preview-img" src="" alt="Preview">
+                                <button id="remove-image-btn" class="remove-image-btn">×</button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-wrapper">
+                            <button id="upload-image-btn" class="btn-upload-image" title="Upload gambar">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M2.5 15.8334V4.16675C2.5 3.24625 3.24625 2.50008 4.16667 2.50008H15.8333C16.7538 2.50008 17.5 3.24625 17.5 4.16675V15.8334C17.5 16.7539 16.7538 17.5001 15.8333 17.5001H4.16667C3.24625 17.5001 2.5 16.7539 2.5 15.8334Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M7.5 7.50008C7.96025 7.50008 8.33334 7.12699 8.33334 6.66675C8.33334 6.20649 7.96025 5.83341 7.5 5.83341C7.03975 5.83341 6.66667 6.20649 6.66667 6.66675C6.66667 7.12699 7.03975 7.50008 7.5 7.50008Z" fill="currentColor"/>
+                                    <path d="M14.1667 12.5001L11.6667 9.16675L9.16667 12.5001L7.5 10.8334L4.16667 15.0001H15.8333L14.1667 12.5001Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <input type="file" id="image-input" accept="image/*" class="hidden">
+                            
+                            <textarea 
+                                id="chat-input" 
+                                class="chat-input" 
+                                placeholder="Ketik sesuatu... (Ctrl + Enter untuk kirim)"
+                                rows="1"
+                            ></textarea>
+                            
+                            <button id="send-btn" class="btn-send">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10.8333 15.8334L10 10.0001M10 10.0001L15.8333 4.16675L10 10.0001ZM10 10.0001L4.16667 15.8334L10 10.0001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <p class="input-hint">Tekan Ctrl + Enter untuk kirim • Ctrl + K untuk fokus • Ctrl + N untuk chat baru</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voice Mode -->
+            <div id="voice-mode" class="mode-content hidden">
+                <div class="voice-container">
+                    <div class="voice-orb-container">
+                        <div class="voice-orb" id="voice-orb">
+                            <div class="orb-core"></div>
+                            <div class="orb-ring ring-1"></div>
+                            <div class="orb-ring ring-2"></div>
+                            <div class="orb-ring ring-3"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="voice-status" id="voice-status">
+                        Klik mic untuk mulai bicara
+                    </div>
+                    
+                    <div class="transcript-bubble hidden" id="transcript-bubble">
+                        <p id="transcript-text"></p>
+                    </div>
+                    
+                    <button id="voice-toggle-btn" class="btn-voice-toggle">
+                        <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 1.66675C9.08334 1.66675 8.33334 2.41675 8.33334 3.33341V10.0001C8.33334 10.9167 9.08334 11.6667 10 11.6667C10.9167 11.6667 11.6667 10.9167 11.6667 10.0001V3.33341C11.6667 2.41675 10.9167 1.66675 10 1.66675Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5.00001 10.0001C5.00001 12.7615 7.23834 15.0001 10.0000 15.0001C12.7617 15.0001 15.0000 12.7615 15.0000 10.0001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M10.0000 15.0001V18.3334" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coding Mode -->
+            <div id="coding-mode" class="mode-content hidden">
+                <div class="coding-container">
+                    <div class="coding-header">
+                        <h3>💻 Coding Assistant</h3>
+                        <p>Bantuan coding dengan DeepSeek R1</p>
+                    </div>
+                    
+                    <div id="coding-messages" class="messages-container">
+                        <div class="welcome-message">
+                            <h2>💻 Coding Mode</h2>
+                            <p>Gue pake DeepSeek R1 buat bantu coding lo. Mau nanya apa?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="coding-input" 
+                                class="chat-input coding-input" 
+                                placeholder="Jelasin masalah coding lo..."
+                                rows="1"
+                            ></textarea>
+                            
+                            <button id="coding-send-btn" class="btn-send">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M10.8333 15.8334L10 10.0001M10 10.0001L15.8333 4.16675L10 10.0001ZM10 10.0001L4.16667 15.8334L10 10.0001Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/voice.js"></script>
+    <script src="js/coding.js"></script>
+    <script src="js/history.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Initialize App -->
+    <script type="module">
+        import { initApp } from './js/app.js';
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
